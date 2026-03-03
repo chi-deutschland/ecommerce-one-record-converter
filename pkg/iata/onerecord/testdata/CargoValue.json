@@ -1,0 +1,16 @@
+{
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  },
+  "@type": "cargo:Value",
+  "cargo:numericalValue": "42.0",
+  "cargo:unit": {
+    "@context": {
+      "cargo": "https://onerecord.iata.org/ns/cargo#"
+    },
+    "@type": "cargo:CodeListElement",
+    "cargo:code": "KGM",
+    "cargo:codeListReference": "https://vocabulary.uncefact.org/WeightUnitMeasureCode"
+  }
+}
+

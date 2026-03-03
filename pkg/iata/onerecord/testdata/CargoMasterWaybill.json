@@ -1,0 +1,13 @@
+{
+  "cargo:waybillNumber": "45678905",
+  "cargo:waybillPrefix": "123",
+  "cargo:waybillType": "MASTER",
+  "cargo:shipment": {
+    "@type": "cargo:Shipment"
+  },
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  },
+  "@type": "cargo:Waybill"
+}
+

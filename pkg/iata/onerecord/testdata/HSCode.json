@@ -1,0 +1,10 @@
+{
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  },
+  "@type": "cargo:CodeListElement",
+  "cargo:code": "1234.56",
+  "cargo:codeListReference": "www.tariffnumber.com",
+  "cargo:codeListVersion": "2026"
+}
+

@@ -1,0 +1,10 @@
+{
+  "cargo:code": "DE",
+  "cargo:codeListReference": "https://vocabulary.uncefact.org/CountryId",
+  "cargo:codeListVersion": "2026",
+  "@type": "cargo:CodeListElement",
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  }
+}
+

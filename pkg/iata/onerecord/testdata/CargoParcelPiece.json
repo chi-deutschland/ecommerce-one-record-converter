@@ -1,0 +1,21 @@
+{
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  },
+  "@type": "cargo:Piece",
+  "cargo:containedPieces": [
+    {"@id": "p1"},
+    {"@id": "p2"}
+  ],
+  "cargo:otherIdentifiers": [
+    {
+      "@context": {
+        "cargo": "https://onerecord.iata.org/ns/cargo#"
+      },
+      "@type": "cargo:OtherIdentifier",
+      "cargo:otherIdentifierType": "Parcel ID",
+      "cargo:textualValue": "parcel-789"
+    }
+  ]
+}
+

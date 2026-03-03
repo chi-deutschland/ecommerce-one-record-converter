@@ -1,0 +1,28 @@
+{
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  },
+  "@type": "cargo:Product",
+  "cargo:description": "Test Product",
+  "cargo:otherIdentifiers": [
+    {
+      "@context": {
+        "cargo": "https://onerecord.iata.org/ns/cargo#"
+      },
+      "@type": "cargo:OtherIdentifier",
+      "cargo:otherIdentifierType": "SKU",
+      "cargo:textualValue": "SKU123"
+    }
+  ],
+  "cargo:hsCode": {
+    "@context": {
+      "cargo": "https://onerecord.iata.org/ns/cargo#"
+    },
+    "@type": "cargo:CodeListElement",
+    "cargo:code": "1234.56",
+    "cargo:codeListReference": "www.tariffnumber.com",
+    "cargo:codeListVersion": "2026"
+  },
+  "cargo:hsType": "UN Standard International Trade Classification"
+}
+

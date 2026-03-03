@@ -1,0 +1,9 @@
+{
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  },
+  "@type": "cargo:CodeListElement",
+  "cargo:code": "KGM",
+  "cargo:codeListReference": "https://vocabulary.uncefact.org/WeightUnitMeasureCode"
+}
+

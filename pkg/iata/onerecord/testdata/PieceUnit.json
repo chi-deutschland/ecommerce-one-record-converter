@@ -1,0 +1,10 @@
+{
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  },
+  "@type": "cargo:CodeListElement",
+  "cargo:code": "H87",
+  "cargo:codeListReference": "https://docs.peppol.eu/poacc/billing/3.0/codelist/UNECERec20/",
+  "cargo:codeListVersion": "Revision 11e"
+}
+

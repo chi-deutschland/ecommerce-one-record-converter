@@ -1,0 +1,14 @@
+{
+  "cargo:involvedParties": [
+    {"@type": "cargo:Party"}
+  ],
+  "cargo:pieces": [
+    {"@id": "piece1"},
+    {"@id": "piece2"}
+  ],
+  "@type": "cargo:Shipment",
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  }
+}
+

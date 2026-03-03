@@ -1,0 +1,9 @@
+{
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  },
+  "@type": "cargo:OtherIdentifier",
+  "cargo:otherIdentifierType": "invoice_number",
+  "cargo:textualValue": "INV-002"
+}
+

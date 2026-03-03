@@ -1,0 +1,24 @@
+{
+  "cargo:Address": {
+    "cargo:cityName": "Munich",
+    "cargo:country": {
+      "cargo:code": "DE",
+      "cargo:codeListReference": "https://vocabulary.uncefact.org/CountryId",
+      "@type": "cargo:CodeListElement",
+      "@context": {
+        "cargo": "https://onerecord.iata.org/ns/cargo#"
+      }
+    },
+    "cargo:streetAddressLines": ["Street 1"],
+    "cargo:textualPostalCode": "54321",
+    "@type": "cargo:Address",
+    "@context": {
+      "cargo": "https://onerecord.iata.org/ns/cargo#"
+    }
+  },
+  "@type": "cargo:Location",
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  }
+}
+

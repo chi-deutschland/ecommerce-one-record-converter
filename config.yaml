@@ -1,0 +1,12 @@
+http:
+  addr: ":8181"
+  staticFilesDir: "cmd/frontend/dist"
+neone:
+  requestTimeout: 3m
+  rateLimiterPolicy:
+    maxExecutionsPerMinute: 100
+    maxWaitTime: 30s
+  retryPolicy:
+    maxAttempts: 10
+    delay: 1s
+    maxDelay: 30s

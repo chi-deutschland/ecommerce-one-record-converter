@@ -1,0 +1,106 @@
+{
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  },
+  "@type": "cargo:Item",
+  "cargo:ofProduct": {
+    "@context": {
+      "cargo": "https://onerecord.iata.org/ns/cargo#"
+    },
+    "@type": "cargo:Product",
+    "cargo:description": "Test Product",
+    "cargo:otherIdentifiers": [
+      {
+        "@context": {
+          "cargo": "https://onerecord.iata.org/ns/cargo#"
+        },
+        "@type": "cargo:OtherIdentifier",
+        "cargo:otherIdentifierType": "SKU",
+        "cargo:textualValue": "SKU123"
+      }
+    ],
+    "cargo:hsCode": {
+      "@context": {
+        "cargo": "https://onerecord.iata.org/ns/cargo#"
+      },
+      "@type": "cargo:CodeListElement",
+      "cargo:code": "1234.56",
+      "cargo:codeListReference": "www.tariffnumber.com",
+      "cargo:codeListVersion": "2026"
+    },
+    "cargo:hsType": "UN Standard International Trade Classification"
+  },
+  "cargo:itemQuantity": {
+    "@context": {
+      "cargo": "https://onerecord.iata.org/ns/cargo#"
+    },
+    "@type": "cargo:Value",
+    "cargo:numericalValue": "10",
+    "cargo:unit": {
+      "@context": {
+        "cargo": "https://onerecord.iata.org/ns/cargo#"
+      },
+      "@type": "cargo:CodeListElement",
+      "cargo:code": "H87",
+      "cargo:codeListReference": "https://docs.peppol.eu/poacc/billing/3.0/codelist/UNECERec20/",
+      "cargo:codeListVersion": "Revision 11e"
+    }
+  },
+  "cargo:unitPrice": {
+    "@context": {
+      "cargo": "https://onerecord.iata.org/ns/cargo#"
+    },
+    "@type": "cargo:Value",
+    "cargo:numericalValue": "100.50",
+    "cargo:unit": {
+      "@context": {
+        "cargo": "https://onerecord.iata.org/ns/cargo#"
+      },
+      "@type": "cargo:CodeListElement",
+      "cargo:code": "USD",
+      "cargo:codeListReference": "https://vocabulary.uncefact.org/RevisedCurrencyCode"
+    }
+  },
+  "cargo:weight": {
+    "@context": {
+      "cargo": "https://onerecord.iata.org/ns/cargo#"
+    },
+    "@type": "cargo:Value",
+    "cargo:numericalValue": "5.5",
+    "cargo:unit": {
+      "@context": {
+        "cargo": "https://onerecord.iata.org/ns/cargo#"
+      },
+      "@type": "cargo:CodeListElement",
+      "cargo:code": "KGM",
+      "cargo:codeListReference": "https://vocabulary.uncefact.org/WeightUnitMeasureCode"
+    }
+  },
+  "cargo:otherIdentifiers": [
+    {
+      "@context": {
+        "cargo": "https://onerecord.iata.org/ns/cargo#"
+      },
+      "@type": "cargo:OtherIdentifier",
+      "cargo:otherIdentifierType": "invoice_number",
+      "cargo:textualValue": "INV-001"
+    }
+  ],
+  "cargo:productionCountry": {
+    "@context": {
+      "cargo": "https://onerecord.iata.org/ns/cargo#"
+    },
+    "@type": "cargo:CodeListElement",
+    "cargo:code": "DE",
+    "cargo:codeListReference": "https://vocabulary.uncefact.org/CountryId"
+  },
+  "cargo:targetCountry": {
+    "@context": {
+      "cargo": "https://onerecord.iata.org/ns/cargo#"
+    },
+    "@type": "cargo:CodeListElement",
+    "cargo:code": "US",
+    "cargo:codeListReference": "https://vocabulary.uncefact.org/CountryId"
+  }
+}
+

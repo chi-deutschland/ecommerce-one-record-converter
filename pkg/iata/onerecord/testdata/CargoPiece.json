@@ -1,0 +1,24 @@
+{
+  "@context": {
+    "cargo": "https://onerecord.iata.org/ns/cargo#"
+  },
+  "@type": "cargo:Piece",
+  "cargo:containedItems": [
+    {"@id": "item1"},
+    {"@id": "item2"}
+  ],
+  "cargo:involvedParties": [
+    {"@type": "cargo:Party"}
+  ],
+  "cargo:otherIdentifiers": [
+    {
+      "@context": {
+        "cargo": "https://onerecord.iata.org/ns/cargo#"
+      },
+      "@type": "cargo:OtherIdentifier",
+      "cargo:otherIdentifierType": "reference_id",
+      "cargo:textualValue": "ref-123"
+    }
+  ]
+}
+
