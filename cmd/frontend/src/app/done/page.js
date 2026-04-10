@@ -1,43 +1,124 @@
 "use client";
-import React from 'react';
 
-export default function IntegrationPage() {
+const STEPS = [
+  { label: "Upload", number: 1 },
+  { label: "Processing", number: 2 },
+];
+
+function StepIndicator({ currentStep }) {
   return (
-    <div>
-      <div className="flex items-center justify-center mt-24">
-        <div className="flex items-center">
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-600 text-xl">✓</div>
-          <div className="w-32 h-1 bg-green-600 mx-2"></div>
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-600 text-xl">✓</div>
-        </div>
-      </div>
-      <div className="flex justify-center items-center min-h-screen position-relative">
-        <div className="flex flex-col items-center gap-5">
-          <div className="container p-5 inline-block rounded-lg">
-            <div className="flex items-center mb-16 mt-8">
+    <nav aria-label="Progress" className="flex items-center justify-center gap-2">
+      {STEPS.map((step, idx) => {
+        const isComplete = step.number <= currentStep;
+        return (
+          <div key={step.number} className="flex items-center gap-2">
+            <div className="flex flex-col items-center">
               <div
-                className="flex justify-center items-center rounded-full border-4 border-[#36b47E] h-[75px] w-[75px]">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-16 w-16"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  style={{color: '#36b47E'}}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-                </svg>
+                className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
+                  isComplete
+                    ? "bg-green-600 text-white"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                ✓
               </div>
-              <h1 className="ml-4 text-3xl">Your data is being processed</h1>
+              <span className="mt-1 text-xs text-muted-foreground">{step.label}</span>
             </div>
-            <div className="flex items-top">
-              <h2 className="mt-5 ml-4">Soon it will be available in the NE:ONE Server.</h2>
+            {idx < STEPS.length - 1 && (
+              <div className="mb-5 h-0.5 w-20 bg-green-600 sm:w-32" />
+            )}
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
+
+export default function DonePage() {
+  return (
+    <div className="flex flex-col items-center px-4 py-10">
+      <div className="mb-10">
+        <StepIndicator currentStep={2} />
+      </div>
+
+      <div className="w-full max-w-2xl">
+        <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
+          <div className="flex items-start gap-4">
+            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full border-2 border-green-500 bg-green-500/10">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8 text-green-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
             </div>
             <div>
-              <h2 className="mt-5 ml-4">Notifications will be sent out accordingly for each Box-level Piece
-                created.</h2>
+              <h2 className="text-2xl font-semibold text-foreground">
+                Data Processing Started
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your shipment data has been accepted and is being converted.
+              </p>
             </div>
+          </div>
+
+          <hr className="my-6 border-border" />
+
+          <div className="space-y-4 text-sm text-muted-foreground">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <span className="text-xs font-bold">1</span>
+              </div>
+              <p>
+                Your eCommerce data is being converted into IATA ONE Record Logistics
+                Objects and posted to the NE:ONE Server.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <span className="text-xs font-bold">2</span>
+              </div>
+              <p>
+                Notifications will be sent out for each Box-level Piece created on the
+                server.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <span className="text-xs font-bold">3</span>
+              </div>
+              <p>
+                Once processing is complete, the data will be available in your NE:ONE
+                Server instance.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 flex justify-center">
+            <a
+              href="/upload"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-muted px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+                />
+              </svg>
+              Upload Another File
+            </a>
           </div>
         </div>
       </div>
