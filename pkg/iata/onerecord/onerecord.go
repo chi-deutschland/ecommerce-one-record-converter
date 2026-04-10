@@ -1,3 +1,11 @@
+// Package onerecord provides Go types and constructors for building IATA ONE
+// Record Logistics Objects in JSON-LD format.
+//
+// The types in this package map to the ONE Record cargo and API ontologies,
+// including Waybills, Shipments, Pieces, Items, Products, and associated
+// value objects like Addresses, Locations, and CodeListElements. All
+// constructors produce structs that serialize to spec-compliant JSON-LD when
+// marshalled with encoding/json.
 package onerecord
 
 import (

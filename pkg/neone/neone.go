@@ -1,3 +1,9 @@
+// Package neone provides a client for interacting with the NE:ONE Server API.
+//
+// It handles posting Logistics Objects and notifications, with built-in support
+// for rate limiting, retries with exponential backoff, and request timeouts via
+// failsafe-go policies. The client also verifies object availability after
+// creation to prevent race conditions in rapid successive requests.
 package neone
 
 import (

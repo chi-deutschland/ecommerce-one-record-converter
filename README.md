@@ -1,30 +1,81 @@
 # eCommerce ONE Record Converter
 
-This project converts eCommerce data from standard Excel files into the ONE Record format and posts it to a NE:ONE
-Server.
+[![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)](https://go.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![IATA ONE Record](https://img.shields.io/badge/IATA-ONE%20Record-004B87)](https://www.iata.org/one-record)
 
-## TechStack
+A tool that converts eCommerce shipment data from Excel files into
+[IATA ONE Record](https://www.iata.org/one-record) format and posts the
+resulting Logistics Objects to a [NE:ONE Server](https://git.openlogisticsfoundation.org/wg-digitalaircargo/ne-one).
 
-### Frontend
+## Background
 
-* React
-* NextJS
-* Tailwind
+This project was developed by **[CHI Deutschland Cargo Handling GmbH](https://chi-cargo.com/)** as part of
+the **[Digitales Testfeld Air Cargo (DTAC)](https://www.digitales-testfeld-air-cargo.de/)** research project. Within
+DTAC, this converter belongs to the **Teilprojekt A: NE:ONE® Ecosystem** sub-project, which demonstrates how
+the IATA ONE Record standard can create end-to-end transparency for eCommerce shipments across all entities in the air
+cargo supply chain — from shippers and ground handling agents to carriers and customs.
 
-### Backend
+In eCommerce air cargo, large shippers (e.g. TEMU, Shaoke, Shein) typically announce shipments via Excel spreadsheets. 
+Rather than requiring these shippers to change their established processes, this converter bridges the gap: it accepts the
+traditional Excel-based input and transforms it into the modern ONE Record linked-data format, enabling seamless
+integration with ONE Record-enabled supply chain participants.
 
-* Go
+## Architecture
 
-### Required Infrastructure
+```
+┌─────────────┐     ┌───────────────────────────────┐     ┌────────────────┐
+│   Frontend  │────▶│          Go Backend           │────▶│  NE:ONE Server │
+│  (Next.js)  │     │                               │     │                │
+│             │     │  ┌────────┐   ┌─────────────┐ │     │  ONE Record    │
+│  Upload UI  │     │  │ Excel  │──▶│  ONE Record │─┼────▶│  Logistics     │
+│  + Config   │     │  │ Parser │   │  Converter  │ │     │  Objects       │
+│             │     │  └────────┘   └─────────────┘ │     │                │
+└─────────────┘     └───────────────────────────────┘     └────────────────┘
+```
 
-* [NE\-ONE Server](https://git.openlogisticsfoundation.org/wg-digitalaircargo/ne-one/-/tree/develop?ref_type=heads)
+**Frontend** — A static Next.js app where users configure the NE:ONE Server connection (base URL + auth token) and
+upload an Excel file.
 
-## Usage
+**Backend** — A Go HTTP server that:
+1. Receives the uploaded Excel file
+2. Parses and validates the spreadsheet data
+3. Converts each row into ONE Record Logistics Objects (JSON-LD)
+4. Posts the objects to the configured NE:ONE Server via its REST API
+5. Sends notifications for each created Box-level Piece
 
-### Frontend
+### Data Model
 
-Before running the server, you need to build the static files for the frontend. To do this, use the following commands
-starting a terminal on the root directory of the project:
+The Excel data is mapped to the following ONE Record object hierarchy:
+
+```
+Waybill (MAWB)
+└── Shipment          (1 MAWB : 1 Shipment)
+    └── Piece [Box]   (1 Shipment : N Box-Level Pieces)
+        └── Piece [Parcel]   (1 Box : N Parcel-Level Pieces)
+            └── Piece [ReferenceID]   (1 Parcel : N ReferenceID-Level Pieces)
+                └── Item   (1 Piece : N Items)
+                    └── Product   (1 Item : 1 Product)
+```
+
+Each level is created as a separate Logistics Object on the NE:ONE Server, with references linking them together
+following the ONE Record data model.
+
+## Prerequisites
+
+| Dependency | Version | Purpose |
+|---|---|---|
+| [Go](https://go.dev/dl/) | 1.26+ | Backend server |
+| [Node.js](https://nodejs.org/) | 18+ | Building the frontend |
+| [npm](https://www.npmjs.com/) | 9+ | Frontend dependency management |
+| [NE:ONE Server](https://git.openlogisticsfoundation.org/wg-digitalaircargo/ne-one) | — | ONE Record server to receive the converted data |
+
+## Getting Started
+
+### 1. Build the Frontend
+
+The backend serves the frontend as static files. Build them first:
 
 ```bash
 cd cmd/frontend
@@ -32,37 +83,155 @@ npm install
 npm run build
 ```
 
-### Backend
+This creates a `dist/` directory with the static export.
 
-To run the backend server, use the following command on the root directory of the project:
+### 2. Configure the Backend
 
-```bash
-go run cmd/backend
+Edit `config.yaml` in the project root to adjust settings:
+
+```yaml
+http:
+  addr: ":8181"                    # Address the HTTP server listens on
+  staticFilesDir: "cmd/frontend/dist"  # Path to the built frontend files
+neone:
+  requestTimeout: 3m               # Timeout for individual NE:ONE API requests
+  rateLimiterPolicy:
+    maxExecutionsPerMinute: 100    # Max requests per minute to NE:ONE Server
+    maxWaitTime: 30s               # Max time to wait when rate limit is exceeded
+  retryPolicy:
+    maxAttempts: 10                # Max retry attempts for failed requests
+    delay: 1s                      # Initial retry delay (exponential backoff)
+    maxDelay: 30s                  # Maximum retry delay
 ```
 
-This will start the backend server on `http://localhost:8181`. You can change this and other configurations in the
-`config.yaml` file in the root directory of the project.
+If `config.yaml` is not found or cannot be read, the application falls back to sensible defaults.
 
-### eCommerce Data
+### 3. Run the Backend
 
-An example Excel file with anonymized eCommerce data is provided in the `cmd/converter/testdata` directory. Make sure to
-use this format for your input data, as the converter is currently hardcoded to expect this specific format.
+```bash
+go run cmd/converter
+```
 
-Note that the spreadsheet contains one item per line. The column NumberOfPieces should contain the value 1 for the first
-item of a piece and 0 for all other items within the same piece, which share the same piece reference ID.
+The server starts at `http://localhost:8181` (or the address configured in `config.yaml`).
 
-The eCommerce Data is grouped into the following levels and relationships in ONE-Record format:
+### 4. Use the Application
 
-- Waybill (MAWB) currently only one MAWB in test data, but multiple are supported
-- Shipment (1 MAWB : 1 Shipment)
-- Box-Level Piece (1 Shipment : N Box-Level-Pieces)
-- Parcel-Level Piece (1 Box-Level-Piece : N Parcel-Level-Pieces)
-- ReferenceID-Level Piece (1 Parcel-Level-Piece : N ReferenceID-Level-Pieces)
-- Item (1 ReferenceID-Level-Piece : N Items)
-- Product (1 Item : 1 Product)
+1. Open `http://localhost:8181` in your browser
+2. Enter your NE:ONE Server base URL and authentication token
+3. Upload an Excel file (`.xlsx`) containing your eCommerce shipment data
+4. The converter validates your token, parses the file, and begins posting Logistics Objects in the background
 
-### Notifications
+## Excel File Format
 
-The converter sends out notifications via the same NE:ONE Server specified for logistics object creation via the 
-front-end for each Box-level piece created. Set up Notification Forwarding on the NE:ONE Server to receive 
-notifications on a third party server.
+An example file with anonymized data is provided at
+[`cmd/converter/testdata/fake_ecommerce_data.xlsx`](cmd/converter/testdata/fake_ecommerce_data.xlsx).
+
+The spreadsheet must contain one item per row with the following columns (in order):
+
+| # | Column | Description |
+|---|---|---|
+| 0 | `MawbNr` | Master Air Waybill Number (11 digits, e.g. `112-39023246`) |
+| 1 | `BoxID` | Unique box identifier |
+| 2 | `ParcelID` | Unique parcel identifier |
+| 3 | `ReferenceID` | Unique reference identifier for a piece |
+| 4 | `ShipperName` | Name of the shipper |
+| 5 | `ShipperStreet` | Shipper street address |
+| 6 | `ShipperZipcode` | Shipper postal code |
+| 7 | `ShipperCity` | Shipper city |
+| 8 | `ShipperCountryCode` | Shipper country code (ISO) |
+| 9 | `BuyerName` | Name of the buyer/consignee |
+| 10 | `BuyerStreet` | Buyer street address |
+| 11 | `BuyerZipcode` | Buyer postal code |
+| 12 | `BuyerCity` | Buyer city |
+| 13 | `BuyerCountryCode` | Buyer country code (ISO) |
+| 14 | `NumberOfPieces` | `1` for the first item of a piece, `0` for subsequent items sharing the same ReferenceID |
+| 15 | `Quantity` | Item quantity |
+| 16 | `TotalWeight` | Total weight in kg |
+| 17 | `ItemHSCode` | HS code for the item |
+| 18 | `SKUNumber` | Product SKU number |
+| 19 | `GoodsDescription` | Description of the goods |
+| 20 | `InvoiceDate` | Invoice date |
+| 21 | `InvoiceNumber` | Invoice number |
+| 22 | `InvoiceCurrency` | Currency code (e.g. `EUR`, `USD`) |
+| 23 | `TotalValue` | Total value of the item |
+| 24 | `UnitPrice` | Unit price |
+| 25 | `ProductWeight` | Weight of the product |
+| 26 | `CountryOfOrigin` | Country of origin code (ISO) |
+
+> **Note:** The `NumberOfPieces` column controls piece grouping. Set it to `1` for the first item in a piece and `0`
+> for all subsequent items that share the same `ReferenceID` within the same parcel.
+
+## Notifications
+
+The converter sends a creation notification to the NE:ONE Server for each Box-level Piece. To forward these
+notifications to third-party systems, configure Notification Forwarding on your NE:ONE Server instance.
+
+## Running Tests
+
+```bash
+go test ./...
+```
+
+## Building for Linux
+
+A build script for cross-compiling to Linux (amd64) is provided:
+
+```bash
+cd build
+bash gobuild.sh
+```
+
+## Project Structure
+
+```
+├── cmd/
+│   ├── converter/          # Go backend application
+│   │   ├── main.go         # HTTP server setup and entry point
+│   │   ├── converter.go    # Excel-to-ONE-Record conversion and NE:ONE posting
+│   │   ├── parser.go       # Excel file parsing and data model definitions
+│   │   ├── parser_test.go  # Parser tests with embedded test data
+│   │   ├── config/         # YAML configuration loading
+│   │   └── testdata/       # Sample Excel file for testing
+│   └── frontend/           # Next.js frontend application
+│       └── src/
+│           ├── app/        # Pages (upload wizard + done page)
+│           ├── components/ # Reusable UI components
+│           ├── context/    # React context (NE:ONE server config)
+│           └── lib/        # Utility functions
+├── pkg/
+│   ├── iata/
+│   │   ├── mawb.go         # MAWB number parsing (IATA Resolution 600a)
+│   │   └── onerecord/      # ONE Record data model (JSON-LD structs)
+│   └── neone/
+│       └── neone.go        # NE:ONE Server API client (with retry + rate limiting)
+├── build/                  # Build scripts
+├── config.yaml             # Application configuration
+└── README.md
+```
+
+## Troubleshooting
+
+| Problem | Possible Cause | Solution |
+|---|---|---|
+| Static files not loading | Frontend not built | Run `npm run build` in `cmd/frontend` |
+| `401 Unauthorized` after upload | Invalid or expired NE:ONE auth token | Check your token and NE:ONE Server configuration |
+| `connection refused` | NE:ONE Server not reachable | Verify the server URL and that the NE:ONE Server is running |
+| Excel parsing errors | Wrong file format or missing columns | Use the provided example file as a template; ensure all columns match the expected format |
+| Rate limit warnings in logs | Too many requests to NE:ONE Server | Adjust `maxExecutionsPerMinute` in `config.yaml` |
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Acknowledgments
+
+- **[Digitales Testfeld Air Cargo (DTAC)](https://www.digitales-testfeld-air-cargo.de/)** — The research project enabling this work
+- **[IATA ONE Record](https://www.iata.org/one-record)** — The linked-data standard for air cargo
+- **[NE:ONE Server](https://git.openlogisticsfoundation.org/wg-digitalaircargo/ne-one)** — The open-source ONE Record server implementation
+- **[Open Logistics Foundation](https://www.openlogisticsfoundation.org/)** — Hosting the collaborative development environment
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+Copyright © 2025 [CHI Deutschland Cargo Handling GmbH](https://chi-cargo.com/)

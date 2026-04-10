@@ -1,3 +1,8 @@
+// Package iata provides utilities for working with IATA standards in the
+// context of air cargo logistics.
+//
+// Currently it includes parsing and validation of Master Air Waybill (MAWB)
+// numbers according to IATA Resolution 600a.
 package iata
 
 import (
