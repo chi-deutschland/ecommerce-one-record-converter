@@ -9,7 +9,7 @@ export default function ClientLayout({ children }) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="dark"
+      defaultTheme="system"
       enableSystem
       disableTransitionOnChange
     >
