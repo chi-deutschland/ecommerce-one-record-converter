@@ -203,9 +203,14 @@ type Product struct {
 	HsCode           *CodeListElement  `json:"cargo:hsCode,omitempty"`
 	HsType           string            `json:"cargo:hsType,omitempty"`
 
+	ID      string   `json:"@id,omitempty"`
 	Type    string   `json:"@type,omitempty"`
 	Context *Context `json:"@context,omitempty"`
 }
+
+// IsLogisticsObject is a marker method to indicate that Product is a
+// LogisticsObject.
+func (Product) IsLogisticsObject() {}
 
 // CargoProduct creates a new Product with the CargoContext.
 func CargoProduct(skuNumber, hsCode, description string) Product {
@@ -221,6 +226,13 @@ func CargoProduct(skuNumber, hsCode, description string) Product {
 		HsType:           HSType,
 		Context:          new(CargoContext()),
 		Type:             "cargo:Product",
+	}
+}
+
+// NewProductReference creates a new Product reference with the given ID.
+func NewProductReference(id string) Product {
+	return Product{
+		ID: id,
 	}
 }
 
@@ -559,5 +571,91 @@ func PieceCreatedNotification(pieceID, notificationID string) Notification {
 		Context:                   new(APIContext()),
 		Type:                      "api:Notification",
 		ID:                        notificationID,
+	}
+}
+
+// AccessDelegationRequest represents a request to delegate access to logistics
+// objects, including the permissions and logistics objects involved in the
+// delegation.
+type AccessDelegationRequest struct {
+	Context                      Context                 `json:"@context"`
+	Type                         string                  `json:"@type"`
+	APIHasDescription            string                  `json:"api:hasDescription"`
+	APIHasPermission             []APIPermission         `json:"api:hasPermission"`
+	APIIsRequestedFor            []DataHolderURL         `json:"api:isRequestedFor"`
+	APINotifyRequestStatusChange bool                    `json:"api:notifyRequestStatusChange"`
+	APIHasLogisticsObject        []IDOnlyLogisticsObject `json:"api:hasLogisticsObject"`
+}
+
+// CargoAPIContext returns a Context with both the Cargo and API namespaces for
+// One Record objects.
+func CargoAPIContext() Context {
+	return Context{
+		Cargo: "https://onerecord.iata.org/ns/cargo#",
+		API:   "https://onerecord.iata.org/ns/api#",
+	}
+}
+
+// APIPermission represents a permission in an access delegation request,
+// including the ID of the permission.
+type APIPermission struct {
+	ID string `json:"@id"`
+}
+
+// APIPermissionGetLogisticsObject returns an APIPermission for the
+// "api:GET_LOGISTICS_OBJECT" permission.
+func APIPermissionGetLogisticsObject() APIPermission {
+	return APIPermission{
+		ID: "api:GET_LOGISTICS_OBJECT",
+	}
+}
+
+// APIPermissionPatchLogisticsObject returns an APIPermission for the
+// "api:PATCH_LOGISTICS_OBJECT" permission.
+func APIPermissionPatchLogisticsObject() APIPermission {
+	return APIPermission{
+		ID: "api:PATCH_LOGISTICS_OBJECT",
+	}
+}
+
+// DataHolderURL represents a request for delegated access for a specific NE:ONE
+// Server, identified by its DATA_HOLDER URL.
+type DataHolderURL struct {
+	ID string `json:"@id"`
+}
+
+// IDOnlyLogisticsObject represents a reference to a logistics object by its ID,
+// used in access delegation requests when the full logistics object is not
+// needed.
+type IDOnlyLogisticsObject struct {
+	ID string `json:"@id"`
+}
+
+func (IDOnlyLogisticsObject) IsLogisticsObject() {}
+
+func CargoAPIAccessDelegationRequest(
+	description string,
+	permissions []APIPermission,
+	requestedForURLs []string,
+	idOnlyLogisticsObjects []IDOnlyLogisticsObject,
+) AccessDelegationRequest {
+	isRequestedFor := make([]DataHolderURL, len(requestedForURLs))
+
+	for _, url := range requestedForURLs {
+		dataHolderURL := DataHolderURL{
+			ID: url,
+		}
+
+		isRequestedFor = append(isRequestedFor, dataHolderURL)
+	}
+
+	return AccessDelegationRequest{
+		Context:                      CargoAPIContext(),
+		Type:                         "api:AccessDelegation",
+		APIHasDescription:            description,
+		APIHasPermission:             permissions,
+		APIIsRequestedFor:            isRequestedFor,
+		APINotifyRequestStatusChange: false,
+		APIHasLogisticsObject:        idOnlyLogisticsObjects,
 	}
 }

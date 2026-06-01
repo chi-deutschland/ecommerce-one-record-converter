@@ -37,16 +37,22 @@ func (e *StatusError) Error() string {
 
 // Client is a NE-ONE API client for interacting with the NE-ONE server.
 type Client struct {
-	client   *http.Client
-	policies []failsafe.Policy[*http.Response]
+	client               *http.Client
+	accessDelegationURLs []string
+	policies             []failsafe.Policy[*http.Response]
 }
 
 // NewServer creates a new NE-ONE API client with the given HTTP client and
 // optional failsafe policies.
-func NewServer(client *http.Client, policies ...failsafe.Policy[*http.Response]) *Client {
+func NewServer(
+	client *http.Client,
+	accessDelegationURLs []string,
+	policies ...failsafe.Policy[*http.Response],
+) *Client {
 	return &Client{
-		client:   client,
-		policies: policies,
+		client:               client,
+		accessDelegationURLs: accessDelegationURLs,
+		policies:             policies,
 	}
 }
 
@@ -111,7 +117,9 @@ func (s *Client) PostLogisticsObject(
 
 	logisticsObjectURL := resp.Header.Get("Location")
 
-	log.Debug().Str("location_header", logisticsObjectURL).Msg("received response from NE-ONE server")
+	log.Debug().
+		Str("location_header", logisticsObjectURL).
+		Msg("received logistics object response from NE-ONE server")
 
 	s.waitForObjectAvailability(ctx, baseURL, auth, logisticsObjectURL)
 
@@ -238,6 +246,96 @@ func (s *Client) PostLogisticsObjectCreationNotification(
 	}
 
 	return nil
+}
+
+// DelegateAccess sends a request to the NE-ONE server to delegate access to the
+// created logistics object for the configured NE-ONE servers. This allows the
+// specified NE-ONE servers to access the logistics object as needed.
+func (s *Client) DelegateAccess(
+	ctx context.Context,
+	baseURL string,
+	auth string,
+	description string,
+	objectIDs []string,
+) (string, error) {
+	if len(s.accessDelegationURLs) == 0 || len(objectIDs) == 0 {
+		return "", nil
+	}
+
+	const delegateAccessEndpoint = "access-delegations"
+
+	url, err := urlpkg.JoinPath(baseURL, delegateAccessEndpoint)
+	if err != nil {
+		return "", fmt.Errorf("failed to join URL path: %w", err)
+	}
+
+	idOnlyLOs := make([]onerecord.IDOnlyLogisticsObject, len(objectIDs))
+	for i, objectID := range objectIDs {
+		idOnlyLOs[i] = onerecord.IDOnlyLogisticsObject{
+			ID: objectID,
+		}
+	}
+
+	delegationRequest := onerecord.CargoAPIAccessDelegationRequest(
+		description,
+		[]onerecord.APIPermission{
+			onerecord.APIPermissionGetLogisticsObject(),
+			onerecord.APIPermissionPatchLogisticsObject(),
+		},
+		s.accessDelegationURLs,
+		idOnlyLOs,
+	)
+
+	requestBody, err := json.Marshal(delegationRequest)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal delegation request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(requestBody))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header = map[string][]string{
+		"Authorization": {auth},
+		"Content-Type":  {"application/ld+json"},
+	}
+
+	resp, err := failsafehttp.NewRequest(req, s.client, s.policies...).Do()
+	if err != nil {
+		return "", fmt.Errorf("failed to send request: %w", err)
+	}
+
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.Err(err).Msg("failed to close response body")
+		}
+	}()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		log.Debug().Str("request_body", string(requestBody)).Msg("request body that caused error response")
+
+		return "", &StatusError{
+			StatusCode: resp.StatusCode,
+			Body:       responseBody,
+		}
+	}
+
+	actionRequestURL := resp.Header.Get("Location")
+
+	log.Debug().
+		Str("location_header", actionRequestURL).
+		Msg("received action request response from NE-ONE server")
+
+	s.waitForObjectAvailability(ctx, baseURL, auth, actionRequestURL)
+
+	return actionRequestURL, nil
 }
 
 // waitForObjectAvailability performs a GET request to verify that a newly created

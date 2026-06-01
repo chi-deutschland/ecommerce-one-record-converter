@@ -25,6 +25,7 @@ type NEONE struct {
 	RequestTimeout    time.Duration     `yaml:"requestTimeout"`
 	RateLimiterPolicy RateLimiterPolicy `yaml:"rateLimiterPolicy"`
 	RetryPolicy       RetryPolicy       `yaml:"retryPolicy"`
+	AccessDelegation  AccessDelegation  `yaml:"accessDelegation"`
 }
 
 // RateLimiterPolicy defines the configuration for rate limiting requests to the
@@ -40,6 +41,17 @@ type RetryPolicy struct {
 	MaxAttempts int           `yaml:"maxAttempts"`
 	Delay       time.Duration `yaml:"delay"`
 	MaxDelay    time.Duration `yaml:"maxDelay"`
+}
+
+// AccessDelegation defines the configuration for delegating access to the
+// eCommerce Objects created on the NE-ONE Server.
+type AccessDelegation struct {
+	// IsRequestedFor is a list of NE:ONE Servers DATA_HOLDER URLs for which the
+	// converter should request delegated access when creating eCommerce Objects.
+	// This allows the converter to create eCommerce Objects that are accessible by
+	// the specified NE:ONE Servers, enabling them to retrieve and use the data as
+	// needed.
+	URLs []string `yaml:"URLs"`
 }
 
 // Load reads the configuration from a YAML file and returns a Config struct.

@@ -91,7 +91,19 @@ func setUpNeOneServerConn(cfg config.NEONE) *neone.Client {
 		WithBackoff(cfg.RetryPolicy.Delay, cfg.RetryPolicy.MaxDelay).
 		Build()
 
-	return neone.NewServer(http.DefaultClient, timeoutPolicy, rateLimitPolicy, retryPolicy)
+	var accessDelegationURLs []string
+
+	if len(cfg.AccessDelegation.URLs) > 0 {
+		accessDelegationURLs = cfg.AccessDelegation.URLs
+
+		log.Debug().Strs("URLs", accessDelegationURLs).Msg("Access delegation URLs configured, " +
+			"the converter will request delegated access for created eCommerce Objects")
+	} else {
+		log.Debug().Msg("No access delegation URLs configured, " +
+			"proceeding without access delegation for created eCommerce Objects")
+	}
+
+	return neone.NewServer(http.DefaultClient, accessDelegationURLs, timeoutPolicy, rateLimitPolicy, retryPolicy)
 }
 
 func setUpMux(cfg config.HTTP, server *neone.Client) *http.ServeMux {

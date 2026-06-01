@@ -157,6 +157,20 @@ func (forwarder *NeoneDataForwarder) postECommerceBoxes(
 		log.Debug().Str("URL", logisticsObjectURL).Msg("Posted notification for created box")
 	}
 
+	accessDelegationULR, err := forwarder.Server.DelegateAccess(ctx,
+		neoneServerURL,
+		auth,
+		"Automatic access delegation for eCommerce boxes",
+		boxURLs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delegate access for boxes: %w", err)
+	}
+
+	log.Debug().
+		Str("access_delegation_URL", accessDelegationULR).
+		Strs("URLs", boxURLs).
+		Msg("Posted access delegation for boxes to NE:ONE Server")
+
 	return boxURLs, nil
 }
 
@@ -187,6 +201,20 @@ func (forwarder *NeoneDataForwarder) postECommerceParcels(
 		parcelURLs = append(parcelURLs, logisticsObjectURL)
 		log.Debug().Str("URL", logisticsObjectURL).Msg("Parcel posted to NE:ONE Server")
 	}
+
+	accessDelegationULR, err := forwarder.Server.DelegateAccess(ctx,
+		neoneServerURL,
+		auth,
+		"Automatic access delegation for eCommerce parcels",
+		parcelURLs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delegate access for parcels: %w", err)
+	}
+
+	log.Debug().
+		Str("access_delegation_URL", accessDelegationULR).
+		Strs("URLs", parcelURLs).
+		Msg("Posted access delegation for parcels to NE:ONE Server")
 
 	return parcelURLs, nil
 }
@@ -233,6 +261,20 @@ func (forwarder *NeoneDataForwarder) postECommercePieces(
 		log.Debug().Str("URL", logisticsObjectURL).Msg("Piece posted to NE:ONE Server")
 	}
 
+	accessDelegationULR, err := forwarder.Server.DelegateAccess(ctx,
+		neoneServerURL,
+		auth,
+		"Automatic access delegation for eCommerce pieces",
+		pieceURLs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delegate access for pieces: %w", err)
+	}
+
+	log.Debug().
+		Str("access_delegation_URL", accessDelegationULR).
+		Strs("URLs", pieceURLs).
+		Msg("Posted access delegation for pieces to NE:ONE Server")
+
 	return pieceURLs, nil
 }
 
@@ -242,15 +284,29 @@ func (forwarder *NeoneDataForwarder) postECommerceItems(
 	auth string,
 	items []Item,
 ) ([]string, error) {
+	var productURLs []string
 	var itemURLs []string
 
 	for _, item := range items {
-		log.Debug().Str("unit_price", item.UnitPrice).Msg("Posting item to NE:ONE Server")
+		log.Debug().
+			Str("SKU", item.Product.SkuNumber).
+			Str("HSCODE", item.Product.HsCode).
+			Msg("Posting product to NE:ONE Server")
 
-		product := onerecord.CargoProduct(item.Product.SkuNumber, item.Product.HsCode, item.Product.Description)
+		productURL, err := forwarder.Server.PostLogisticsObject(ctx,
+			neoneServerURL,
+			auth,
+			onerecord.CargoProduct(item.Product.SkuNumber, item.Product.HsCode, item.Product.Description),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to post item to neone server: %w", err)
+		}
+
+		productURLs = append(productURLs, productURL)
+		log.Debug().Str("URL", productURL).Msg("Product posted to NE:ONE Server")
 
 		logisticObjectItem := onerecord.CargoItem(onerecord.ItemParams{
-			Product:               product,
+			Product:               onerecord.NewProductReference(productURL),
 			ItemQuantity:          item.Quantity,
 			UnitPrice:             item.UnitPrice,
 			Currency:              item.InvoiceCurrency,
@@ -259,6 +315,8 @@ func (forwarder *NeoneDataForwarder) postECommerceItems(
 			ProductionCountryCode: item.CountryOfOrigin,
 			TargetCountryCode:     item.CountryOfDestination,
 		})
+
+		log.Debug().Str("unit_price", item.UnitPrice).Msg("Posting item to NE:ONE Server")
 
 		logisticsObjectURL, err := forwarder.Server.PostLogisticsObject(ctx,
 			neoneServerURL,
@@ -271,6 +329,22 @@ func (forwarder *NeoneDataForwarder) postECommerceItems(
 		itemURLs = append(itemURLs, logisticsObjectURL)
 		log.Debug().Str("URL", logisticsObjectURL).Msg("Item posted to NE:ONE Server")
 	}
+
+	itemProductURLs := append(itemURLs, productURLs...)
+
+	accessDelegationULR, err := forwarder.Server.DelegateAccess(ctx,
+		neoneServerURL,
+		auth,
+		"Automatic access delegation for eCommerce items and products",
+		itemProductURLs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delegate access for items and products: %w", err)
+	}
+
+	log.Debug().
+		Str("access_delegation_URL", accessDelegationULR).
+		Strs("URLs", itemProductURLs).
+		Msg("Posted access delegation for items and products to NE:ONE Server")
 
 	return itemURLs, nil
 }
