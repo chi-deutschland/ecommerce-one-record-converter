@@ -3,11 +3,9 @@ package onerecord_test
 import (
 	_ "embed"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"testing"
 
-	"chi-deutschland.com/ecommerce-one-record-converter/pkg/iata"
 	"chi-deutschland.com/ecommerce-one-record-converter/pkg/iata/onerecord"
 )
 
@@ -29,9 +27,6 @@ var (
 
 	//go:embed testdata/CargoLocation.json
 	CargoLocationJSON []byte
-
-	//go:embed testdata/CargoMasterWaybill.json
-	CargoMasterWaybillJSON []byte
 
 	//go:embed testdata/CargoOtherIdentifier.json
 	CargoOtherIdentifierJSON []byte
@@ -79,20 +74,6 @@ func TestOneRecordFunctions(t *testing.T) {
 		gotFn    func() (any, error)
 		expected []byte
 	}{
-		{
-			name: "CargoMasterWaybill",
-			gotFn: func() (any, error) {
-				shipment := &onerecord.Shipment{Type: "cargo:Shipment"}
-
-				mawb, err := iata.ParseMawb("12345678905")
-				if err != nil {
-					return nil, fmt.Errorf("failed to parse MAWB: %w", err)
-				}
-
-				return onerecord.CargoMasterWaybill(mawb, shipment), nil
-			},
-			expected: CargoMasterWaybillJSON,
-		},
 		{
 			name: "CargoContext",
 			gotFn: func() (any, error) {

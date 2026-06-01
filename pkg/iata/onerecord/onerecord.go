@@ -8,15 +8,6 @@
 // marshalled with encoding/json.
 package onerecord
 
-import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"strconv"
-
-	"chi-deutschland.com/ecommerce-one-record-converter/pkg/iata"
-)
-
 // LogisticsObject is an interface for One Record objects which are Logistics
 // Objects.
 type LogisticsObject interface {
@@ -143,39 +134,6 @@ func CargoLocation(address *Address) Location {
 		Context: new(CargoContext()),
 	}
 }
-
-// Waybill represents a waybill document, such as a Master Air Waybill or a House Air Waybill.
-type Waybill struct {
-	ArrivalLocation   *Location   `json:"cargo:arrivalLocation,omitempty"`
-	DepartureLocation *Location   `json:"cargo:departureLocation,omitempty"`
-	WaybillNumber     string      `json:"cargo:waybillNumber,omitempty"`
-	WaybillPrefix     string      `json:"cargo:waybillPrefix,omitempty"`
-	WaybillType       WaybillType `json:"cargo:waybillType,omitempty"`
-	InvolvedParties   []Party     `json:"cargo:involvedParties,omitempty"`
-	ShippingRef       string      `json:"cargo:shippingRefNo,omitempty"`
-	Shipment          *Shipment   `json:"cargo:shipment,omitempty"`
-
-	// JSON-LD stuff
-	Context *Context `json:"@context,omitempty"`
-	Type    string   `json:"@type,omitempty"`
-}
-
-// CargoMasterWaybill creates a new Master Air Waybill with the given MAWB number
-// and shipment.
-func CargoMasterWaybill(mawbNumber iata.MawbNumber, shipment *Shipment) Waybill {
-	return Waybill{
-		WaybillNumber: strconv.Itoa(mawbNumber.Serial()),
-		WaybillPrefix: strconv.Itoa(mawbNumber.AirlineCode()),
-		WaybillType:   WaybillTypeMaster,
-		Shipment:      shipment,
-		Context:       new(CargoContext()),
-		Type:          "cargo:Waybill",
-	}
-}
-
-// IsLogisticsObject is a marker method to indicate that Waybill is a
-// LogisticsObject.
-func (Waybill) IsLogisticsObject() {}
 
 // Context represents the JSON-LD context for One Record objects.
 type Context struct {
@@ -454,7 +412,7 @@ func ParcelIDIdentifier(parcelID string) OtherIdentifier {
 }
 
 // CargoBoxPiece creates a new Piece representing a box, with the CargoContext.
-func CargoBoxPiece(containedPieces []Piece, boxID string) Piece {
+func CargoBoxPiece(boxID string, containedPieces []Piece, involvedParties []Party) Piece {
 	var otherIdentifiers []OtherIdentifier
 	if boxID != "" {
 		otherIdentifiers = []OtherIdentifier{BoxIDIdentifier(boxID)}
@@ -464,6 +422,7 @@ func CargoBoxPiece(containedPieces []Piece, boxID string) Piece {
 		Context:          new(CargoContext()),
 		Type:             "cargo:Piece",
 		ContainedPieces:  containedPieces,
+		InvolvedParties:  involvedParties,
 		OtherIdentifiers: otherIdentifiers,
 	}
 }
@@ -473,44 +432,6 @@ func CargoBoxPiece(containedPieces []Piece, boxID string) Piece {
 func BoxIDIdentifier(boxID string) OtherIdentifier {
 	return CargoOtherIdentifier("Box ID", boxID)
 }
-
-// WaybillType represents the type of waybill (MASTER, HOUSE, DIRECT).
-type WaybillType string
-
-// ErrUnknownWaybillType is an error returned when an unknown waybill type is
-// encountered during JSON unmarshalling.
-var ErrUnknownWaybillType = errors.New("unknown waybill type")
-
-// UnmarshalJSON implements the json.Unmarshaler interface for WaybillType,
-// allowing it to be unmarshalled from a JSON string.
-func (t *WaybillType) UnmarshalJSON(data []byte) error {
-	var waybill string
-
-	err := json.Unmarshal(data, &waybill)
-	if err != nil {
-		return err //nolint:wrapcheck // no point in wrapping unmarshalling errors here
-	}
-
-	switch waybill {
-	case "MASTER":
-		*t = WaybillTypeMaster
-	case "HOUSE":
-		*t = WaybillTypeHouse
-	case "DIRECT":
-		*t = WaybillTypeDirect
-	default:
-		return fmt.Errorf("%w: %s", ErrUnknownWaybillType, waybill)
-	}
-
-	return nil
-}
-
-// WaybillType constants for different types of waybills.
-const (
-	WaybillTypeMaster WaybillType = "MASTER"
-	WaybillTypeHouse  WaybillType = "HOUSE"
-	WaybillTypeDirect WaybillType = "DIRECT"
-)
 
 // CargoConsignee creates a new Party representing a consignee, with the CargoContext.
 func CargoConsignee(name string, location *Location) Party {

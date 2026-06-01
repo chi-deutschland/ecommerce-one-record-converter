@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"chi-deutschland.com/ecommerce-one-record-converter/pkg/iata"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -19,33 +18,32 @@ import (
 // according to the expected Excel format. In particular, column indexes must be
 // valid non-negative integers or the validation will panic.
 type rowData struct {
-	MasterAirWaybillNumber string `columnHeaderID:"MawbNr"             columnIndex:"0"`
-	BoxID                  string `columnHeaderID:"BoxID"              columnIndex:"1"`
-	ParcelID               string `columnHeaderID:"ParcelID"           columnIndex:"2"`
-	ReferenceID            string `columnHeaderID:"ReferenceID"        columnIndex:"3"`
-	ShipperName            string `columnHeaderID:"ShipperName"        columnIndex:"4"`
-	ShipperStreet          string `columnHeaderID:"ShipperStreet"      columnIndex:"5"`
-	ShipperZipcode         string `columnHeaderID:"ShipperZipcode"     columnIndex:"6"`
-	ShipperCity            string `columnHeaderID:"ShipperCity"        columnIndex:"7"`
-	ShipperCountryCode     string `columnHeaderID:"ShipperCountryCode" columnIndex:"8"`
-	BuyerName              string `columnHeaderID:"BuyerName"          columnIndex:"9"`
-	BuyerStreet            string `columnHeaderID:"BuyerStreet"        columnIndex:"10"`
-	BuyerZipcode           string `columnHeaderID:"BuyerZipcode"       columnIndex:"11"`
-	BuyerCity              string `columnHeaderID:"BuyerCity"          columnIndex:"12"`
-	BuyerCountryCode       string `columnHeaderID:"BuyerCountryCode"   columnIndex:"13"`
-	NumberOfPieces         string `columnHeaderID:"NumberOfPieces"     columnIndex:"14"`
-	Quantity               string `columnHeaderID:"Quantity"           columnIndex:"15"`
-	TotalWeight            string `columnHeaderID:"TotalWeight"        columnIndex:"16"`
-	ItemHSCode             string `columnHeaderID:"ItemHSCode"         columnIndex:"17"`
-	SKUNumber              string `columnHeaderID:"SKUNumber"          columnIndex:"18"`
-	GoodsDescription       string `columnHeaderID:"GoodsDescription"   columnIndex:"19"`
-	InvoiceDate            string `columnHeaderID:"InvoiceDate"        columnIndex:"20"`
-	InvoiceNumber          string `columnHeaderID:"InvoiceNumber"      columnIndex:"21"`
-	InvoiceCurrency        string `columnHeaderID:"InvoiceCurrency"    columnIndex:"22"`
-	TotalValue             string `columnHeaderID:"TotalValue"         columnIndex:"23"`
-	UnitPrice              string `columnHeaderID:"UnitPrice"          columnIndex:"24"`
-	ProductWeight          string `columnHeaderID:"ProductWeight"      columnIndex:"25"`
-	CountryOfOrigin        string `columnHeaderID:"CountryOfOrigin"    columnIndex:"26"`
+	BoxID              string `columnHeaderID:"BoxID"              columnIndex:"0"`
+	ParcelID           string `columnHeaderID:"ParcelID"           columnIndex:"1"`
+	ReferenceID        string `columnHeaderID:"ReferenceID"        columnIndex:"2"`
+	ShipperName        string `columnHeaderID:"ShipperName"        columnIndex:"3"`
+	ShipperStreet      string `columnHeaderID:"ShipperStreet"      columnIndex:"4"`
+	ShipperZipcode     string `columnHeaderID:"ShipperZipcode"     columnIndex:"5"`
+	ShipperCity        string `columnHeaderID:"ShipperCity"        columnIndex:"6"`
+	ShipperCountryCode string `columnHeaderID:"ShipperCountryCode" columnIndex:"7"`
+	BuyerName          string `columnHeaderID:"BuyerName"          columnIndex:"8"`
+	BuyerStreet        string `columnHeaderID:"BuyerStreet"        columnIndex:"9"`
+	BuyerZipcode       string `columnHeaderID:"BuyerZipcode"       columnIndex:"10"`
+	BuyerCity          string `columnHeaderID:"BuyerCity"          columnIndex:"11"`
+	BuyerCountryCode   string `columnHeaderID:"BuyerCountryCode"   columnIndex:"12"`
+	NumberOfPieces     string `columnHeaderID:"NumberOfPieces"     columnIndex:"13"`
+	Quantity           string `columnHeaderID:"Quantity"           columnIndex:"14"`
+	TotalWeight        string `columnHeaderID:"TotalWeight"        columnIndex:"15"`
+	ItemHSCode         string `columnHeaderID:"ItemHSCode"         columnIndex:"16"`
+	SKUNumber          string `columnHeaderID:"SKUNumber"          columnIndex:"17"`
+	GoodsDescription   string `columnHeaderID:"GoodsDescription"   columnIndex:"18"`
+	InvoiceDate        string `columnHeaderID:"InvoiceDate"        columnIndex:"19"`
+	InvoiceNumber      string `columnHeaderID:"InvoiceNumber"      columnIndex:"20"`
+	InvoiceCurrency    string `columnHeaderID:"InvoiceCurrency"    columnIndex:"21"`
+	TotalValue         string `columnHeaderID:"TotalValue"         columnIndex:"22"`
+	UnitPrice          string `columnHeaderID:"UnitPrice"          columnIndex:"23"`
+	ProductWeight      string `columnHeaderID:"ProductWeight"      columnIndex:"24"`
+	CountryOfOrigin    string `columnHeaderID:"CountryOfOrigin"    columnIndex:"25"`
 }
 
 const (
@@ -211,44 +209,22 @@ func setFieldValue(fieldValue reflect.Value, fieldType reflect.StructField, raw 
 	return nil
 }
 
-// MawbMap is a map of master air waybill numbers to their corresponding master
-// air waybill data. It is used to group data by unique master air waybill
-// numbers.
-type MawbMap map[iata.MawbNumber]MasterAirWaybill
-
-// MasterAirWaybill represents the data associated with a master air waybill,
-// which is the top level entity in the data hierarchy.
-type MasterAirWaybill struct {
-	Boxes              BoxMap
-	ShipperName        string
-	ShipperStreet      string
-	ShipperZipcode     string
-	ShipperCity        string
-	ShipperCountryCode string
-}
-
-func newEmptyMawb(data rowData) MasterAirWaybill {
-	return MasterAirWaybill{
-		Boxes:              make(map[BoxID]Box),
-		ShipperName:        data.ShipperName,
-		ShipperStreet:      data.ShipperStreet,
-		ShipperZipcode:     data.ShipperZipcode,
-		ShipperCity:        data.ShipperCity,
-		ShipperCountryCode: data.ShipperCountryCode,
-	}
-}
-
-// BoxID is a unique identifier for a box within a master air waybill.
+// BoxID is a unique identifier for a Box.
 type BoxID string
 
 // BoxMap is a map of box IDs to their corresponding box data. It is used to
-// group data by unique box IDs within a master air waybill.
+// group data by unique box IDs within an eCommerce shipment.
 type BoxMap map[BoxID]Box
 
 // Box represents the data associated with a box, which is a container for
 // parcels.
 type Box struct {
-	Parcels ParcelMap
+	Parcels            ParcelMap
+	ShipperName        string
+	ShipperStreet      string
+	ShipperZipcode     string
+	ShipperCity        string
+	ShipperCountryCode string
 }
 
 // ParcelMap is a map of parcel IDs to their corresponding parcel data. It is
@@ -302,7 +278,7 @@ type Product struct {
 
 var errFailedToGetSheetList = errors.New("failed to get sheet list from excel file")
 
-func ParseExcelData(file *excelize.File) (MawbMap, error) {
+func ParseExcelData(file *excelize.File) (BoxMap, error) {
 	sheetList := file.GetSheetList()
 	if len(sheetList) == 0 {
 		return nil, errFailedToGetSheetList
@@ -315,18 +291,18 @@ func ParseExcelData(file *excelize.File) (MawbMap, error) {
 		return nil, fmt.Errorf("failed to read rows from excel file: %w", err)
 	}
 
-	mawbMap, err := excelRowsToOneRecord(rows)
+	boxMap, err := excelRowsToOneRecord(rows)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert excel to one record: %w", err)
 	}
 
-	return mawbMap, nil
+	return boxMap, nil
 }
 
 var errNoRows = errors.New("no rows in excel")
 
-func excelRowsToOneRecord(rows *excelize.Rows) (MawbMap, error) {
-	mawbs := make(MawbMap)
+func excelRowsToOneRecord(rows *excelize.Rows) (BoxMap, error) {
+	boxes := make(BoxMap)
 
 	rowNumber := 1
 
@@ -347,16 +323,16 @@ func excelRowsToOneRecord(rows *excelize.Rows) (MawbMap, error) {
 	for rows.Next() {
 		rowNumber++
 
-		err := processRow(rows, mawbs)
+		err := processRow(rows, boxes)
 		if err != nil {
 			return nil, fmt.Errorf("failed to process row %d: %w", rowNumber, err)
 		}
 	}
 
-	return mawbs, nil
+	return boxes, nil
 }
 
-func processRow(rows *excelize.Rows, mawbs MawbMap) error {
+func processRow(rows *excelize.Rows, boxes BoxMap) error {
 	data, err := rows.Columns()
 	if err != nil {
 		return fmt.Errorf("failed to read row column data: %w", err)
@@ -367,50 +343,40 @@ func processRow(rows *excelize.Rows, mawbs MawbMap) error {
 		return fmt.Errorf("failed to parse row data: %w", err)
 	}
 
-	err = updateMawbMap(mawbs, parsed)
+	err = updateBoxMap(boxes, parsed)
 	if err != nil {
-		return fmt.Errorf("failed to update mawb map: %w", err)
+		return fmt.Errorf("failed to update box map: %w", err)
 	}
 
 	return nil
 }
 
-// ErrShipperMismatch indicates that data for a MAWB contains multiple shippers,
+// ErrShipperMismatch indicates that data for a Box contains multiple shippers,
 // which is not supported by the current implementation.
-var ErrShipperMismatch = errors.New("not implemented for multiple shippers per MAWB")
+var ErrShipperMismatch = errors.New("not implemented for multiple shippers per Box")
 
-func updateMawbMap(mawbs MawbMap, data rowData) error {
-	mawbNumber, err := iata.ParseMawb(data.MasterAirWaybillNumber)
-	if err != nil {
-		return fmt.Errorf("failed to parse mawb number: %w", err)
-	}
-
-	_, exists := mawbs[mawbNumber]
-	if !exists {
-		mawbs[mawbNumber] = newEmptyMawb(data)
-	}
-
-	if !shipperMatchesExistingMawb(mawbs[mawbNumber], data) {
-		return ErrShipperMismatch
-	}
-
+func updateBoxMap(boxes BoxMap, data rowData) error {
 	rowBoxId := BoxID(data.BoxID)
 
-	_, exists = mawbs[mawbNumber].Boxes[rowBoxId]
+	_, exists := boxes[rowBoxId]
 	if !exists {
-		mawbs[mawbNumber].Boxes[rowBoxId] = newEmptyBox()
+		boxes[rowBoxId] = newEmptyBox(data)
+	}
+
+	if !shipperMatchesExistingBox(boxes[rowBoxId], data) {
+		return ErrShipperMismatch
 	}
 
 	rowParcelID := ParcelID(data.ParcelID)
 	rowReferenceID := ReferenceID(data.ReferenceID)
 
 	if data.NumberOfPieces == "0" {
-		return appendItemToExistingPiece(mawbs, mawbNumber, rowBoxId, rowParcelID, rowReferenceID, data)
+		return appendItemToExistingPiece(boxes, rowBoxId, rowParcelID, rowReferenceID, data)
 	}
 
-	_, exists = mawbs[mawbNumber].Boxes[rowBoxId].Parcels[rowParcelID]
+	_, exists = boxes[rowBoxId].Parcels[rowParcelID]
 	if !exists {
-		mawbs[mawbNumber].Boxes[rowBoxId].Parcels[rowParcelID] = Parcel{
+		boxes[rowBoxId].Parcels[rowParcelID] = Parcel{
 			Pieces: map[ReferenceID]Piece{
 				rowReferenceID: newReferenceIDPiece(data),
 			},
@@ -419,13 +385,13 @@ func updateMawbMap(mawbs MawbMap, data rowData) error {
 		return nil
 	}
 
-	_, exists = mawbs[mawbNumber].Boxes[rowBoxId].Parcels[rowParcelID].Pieces[rowReferenceID]
+	_, exists = boxes[rowBoxId].Parcels[rowParcelID].Pieces[rowReferenceID]
 	if exists {
-		return fmt.Errorf("piece with reference ID %s already exists for parcel %s, box %s and MAWB %s",
-			rowReferenceID, rowParcelID, rowBoxId, mawbNumber)
+		return fmt.Errorf("piece with reference ID %s already exists for parcel %s, box %s",
+			rowReferenceID, rowParcelID, rowBoxId)
 	}
 
-	mawbs[mawbNumber].Boxes[rowBoxId].Parcels[rowParcelID].Pieces[rowReferenceID] = newReferenceIDPiece(data)
+	boxes[rowBoxId].Parcels[rowParcelID].Pieces[rowReferenceID] = newReferenceIDPiece(data)
 
 	return nil
 }
@@ -458,18 +424,23 @@ func newItem(data rowData) Item {
 	}
 }
 
-func newEmptyBox() Box {
+func newEmptyBox(data rowData) Box {
 	return Box{
-		Parcels: make(map[ParcelID]Parcel),
+		Parcels:            make(map[ParcelID]Parcel),
+		ShipperName:        data.ShipperName,
+		ShipperStreet:      data.ShipperStreet,
+		ShipperZipcode:     data.ShipperZipcode,
+		ShipperCity:        data.ShipperCity,
+		ShipperCountryCode: data.ShipperCountryCode,
 	}
 }
 
-func shipperMatchesExistingMawb(waybill MasterAirWaybill, data rowData) bool {
-	return waybill.ShipperName == data.ShipperName &&
-		waybill.ShipperStreet == data.ShipperStreet &&
-		waybill.ShipperZipcode == data.ShipperZipcode &&
-		waybill.ShipperCity == data.ShipperCity &&
-		waybill.ShipperCountryCode == data.ShipperCountryCode
+func shipperMatchesExistingBox(box Box, data rowData) bool {
+	return box.ShipperName == data.ShipperName &&
+		box.ShipperStreet == data.ShipperStreet &&
+		box.ShipperZipcode == data.ShipperZipcode &&
+		box.ShipperCity == data.ShipperCity &&
+		box.ShipperCountryCode == data.ShipperCountryCode
 }
 
 var (
@@ -478,30 +449,29 @@ var (
 )
 
 func appendItemToExistingPiece(
-	mawbs MawbMap,
-	rowMawb iata.MawbNumber,
+	boxes BoxMap,
 	rowBoxID BoxID,
 	rowParcelID ParcelID,
 	rowReferenceID ReferenceID,
 	data rowData,
 ) error {
-	_, exists := mawbs[rowMawb].Boxes[rowBoxID].Parcels[rowParcelID]
+	_, exists := boxes[rowBoxID].Parcels[rowParcelID]
 	if !exists {
-		return fmt.Errorf("%w: parcel with ID %s not found on box with ID %s in MAWB %s",
-			ErrParcelNotFound, rowParcelID, rowBoxID, rowMawb)
+		return fmt.Errorf("%w: parcel with ID %s not found on box with ID %s",
+			ErrParcelNotFound, rowParcelID, rowBoxID)
 	}
 
-	piece, exists := mawbs[rowMawb].Boxes[rowBoxID].Parcels[rowParcelID].Pieces[rowReferenceID]
+	piece, exists := boxes[rowBoxID].Parcels[rowParcelID].Pieces[rowReferenceID]
 	if !exists {
-		return fmt.Errorf("%w: piece with reference ID %s not found on parcel with ID %s, box with ID %s in MAWB %s",
-			ErrReferenceIDPieceNotFound, rowReferenceID, rowParcelID, rowBoxID, rowMawb)
+		return fmt.Errorf("%w: piece with reference ID %s not found on parcel with ID %s, box with ID %s",
+			ErrReferenceIDPieceNotFound, rowReferenceID, rowParcelID, rowBoxID)
 	}
 
 	// Buyer should already be set from the first item with the same reference ID.
 	// newItem(data)
 	piece.Items = append(piece.Items, newItem(data))
 
-	mawbs[rowMawb].Boxes[rowBoxID].Parcels[rowParcelID].Pieces[rowReferenceID] = piece
+	boxes[rowBoxID].Parcels[rowParcelID].Pieces[rowReferenceID] = piece
 
 	return nil
 }

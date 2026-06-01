@@ -72,7 +72,7 @@ func (forwarder *NeoneDataForwarder) ServeHTTP(responseWriter http.ResponseWrite
 		}
 	}()
 
-	mawbMap, err := ParseExcelData(excelFile)
+	boxMap, err := ParseExcelData(excelFile)
 	if err != nil {
 		log.Info().Err(err).Msg("failed to parse excel data")
 		http.Error(responseWriter, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -91,63 +91,18 @@ func (forwarder *NeoneDataForwarder) ServeHTTP(responseWriter http.ResponseWrite
 	}
 
 	go func(ctx context.Context) { //nolint:gosec,contextcheck // using req ctx would cause work to be canceled too soon
-		waybillURLs, err := forwarder.postECommerceWaybills(ctx, neoneServerURL, authHeaderValue, mawbMap)
+		boxURLs, err := forwarder.postECommerceBoxes(ctx, neoneServerURL, authHeaderValue, boxMap)
 		if err != nil {
-			log.Err(err).Msg("Failed to post eCommerce Waybills")
+			log.Err(err).Msg("Failed to post eCommerce Boxes to NE:ONE Server")
 
 			return
 		}
 
-		log.Debug().Strs("URLs", waybillURLs).Msg("Posted Waybills to NE:ONE Server")
+		log.Debug().Strs("URLs", boxURLs).Msg("Posted Boxes to NE:ONE Server")
 	}(context.Background())
 
 	log.Debug().Msg("Started background process to post data to NE:ONE Server")
 	responseWriter.WriteHeader(http.StatusAccepted)
-}
-
-func (forwarder *NeoneDataForwarder) postECommerceWaybills(
-	ctx context.Context,
-	neoneServerURL string,
-	auth string,
-	mawbs MawbMap,
-) ([]string, error) {
-	var waybillURLs []string
-
-	for mawbNumber, mawb := range mawbs {
-		boxURLs, err := forwarder.postECommerceBoxes(ctx, neoneServerURL, auth, mawb.Boxes)
-		if err != nil {
-			return nil, err // returned err should have enough context already
-		}
-
-		boxPieces := onerecord.NewPieceReferenceArray(boxURLs)
-
-		involvedParties := []onerecord.Party{onerecord.CargoShipper(
-			mawb.ShipperName,
-			new(onerecord.CargoLocation(
-				new(onerecord.CargoAddress(
-					[]string{
-						mawb.ShipperStreet,
-					},
-					mawb.ShipperZipcode,
-					mawb.ShipperCity,
-					mawb.ShipperCountryCode,
-				)))))}
-
-		shipment := new(onerecord.CargoShipment(boxPieces, involvedParties))
-		oneRecordMAWB := onerecord.CargoMasterWaybill(mawbNumber, shipment)
-
-		log.Debug().Stringer("number", mawbNumber).Msg("Posting MAWB to NE:ONE Server")
-
-		mawbURL, err := forwarder.Server.PostLogisticsObject(ctx, neoneServerURL, auth, oneRecordMAWB)
-		if err != nil {
-			return nil, fmt.Errorf("failed to post Waybill to NE:ONE server: %w", err)
-		}
-
-		waybillURLs = append(waybillURLs, mawbURL)
-		log.Debug().Str("URL", mawbURL).Msg("MAWB posted to NE:ONE Server")
-	}
-
-	return waybillURLs, nil
 }
 
 func (forwarder *NeoneDataForwarder) postECommerceBoxes(
@@ -166,7 +121,21 @@ func (forwarder *NeoneDataForwarder) postECommerceBoxes(
 
 		parcelPieces := onerecord.NewPieceReferenceArray(parcelURLs)
 
-		boxPiece := onerecord.CargoBoxPiece(parcelPieces, string(id))
+		involvedParties := []onerecord.Party{
+			onerecord.CargoShipper(
+				box.ShipperName,
+				new(onerecord.CargoLocation(
+					new(onerecord.CargoAddress(
+						[]string{
+							box.ShipperStreet,
+						},
+						box.ShipperZipcode,
+						box.ShipperCity,
+						box.ShipperCountryCode,
+					))))),
+		}
+
+		boxPiece := onerecord.CargoBoxPiece(string(id), parcelPieces, involvedParties)
 
 		log.Debug().Str("id", string(id)).Msg("Posting box to NE:ONE Server")
 
