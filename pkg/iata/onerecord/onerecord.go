@@ -514,66 +514,6 @@ func CargoShipperRole() CodeListElement {
 	}
 }
 
-// APIContext returns a Context with the API namespace for One Record objects.
-func APIContext() Context {
-	return Context{
-		API: "https://onerecord.iata.org/ns/api#",
-	}
-}
-
-// NotificationEventType represents the type of API event.
-type NotificationEventType struct {
-	ID string `json:"@id,omitempty"`
-}
-
-// APIAnyURI represents a URI value in the API namespace.
-type APIAnyURI struct {
-	Type  string `json:"@type,omitempty"`
-	Value string `json:"@value,omitempty"`
-}
-
-// Notification represents a notification of an API event, such as the creation
-// or update of a logistics object.
-type Notification struct {
-	APIHasEventType           *NotificationEventType `json:"api:hasEventType,omitempty"`
-	APIHasLogisticsObject     LogisticsObject        `json:"api:hasLogisticsObject,omitempty"`
-	APIHasLogisticsObjectType *APIAnyURI             `json:"api:hasLogisticsObjectType,omitempty"`
-
-	Context *Context `json:"@context,omitempty"`
-	Type    string   `json:"@type,omitempty"`
-	ID      string   `json:"@id,omitempty"`
-}
-
-// APILogisticsObjectCreatedNotificationEventType returns a NotificationEventType
-// for the "api:LOGISTICS_OBJECT_CREATED" event.
-func APILogisticsObjectCreatedNotificationEventType() NotificationEventType {
-	return NotificationEventType{
-		ID: "https://onerecord.iata.org/ns/api#LOGISTICS_OBJECT_CREATED",
-	}
-}
-
-// APIPieceLogisticsObjectType returns an APIAnyURI representing the type of
-// logistics object for a CargoPiece.
-func APIPieceLogisticsObjectType() APIAnyURI {
-	return APIAnyURI{
-		Type:  "http://www.w3.org/2001/XMLSchema#anyURI",
-		Value: "https://onerecord.iata.org/ns/cargo#Piece",
-	}
-}
-
-// PieceCreatedNotification creates a new Notification for the creation of a
-// Piece logistics object.
-func PieceCreatedNotification(pieceID, notificationID string) Notification {
-	return Notification{
-		APIHasEventType:           new(APILogisticsObjectCreatedNotificationEventType()),
-		APIHasLogisticsObject:     NewPieceReference(pieceID),
-		APIHasLogisticsObjectType: new(APIPieceLogisticsObjectType()),
-		Context:                   new(APIContext()),
-		Type:                      "api:Notification",
-		ID:                        notificationID,
-	}
-}
-
 // AccessDelegationRequest represents a request to delegate access to logistics
 // objects, including the permissions and logistics objects involved in the
 // delegation.

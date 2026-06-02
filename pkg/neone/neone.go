@@ -14,7 +14,6 @@ import (
 	"io"
 	"net/http"
 	urlpkg "net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -178,74 +177,6 @@ func (s *Client) ValidateToken(ctx context.Context, baseURL, auth string) error 
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return &StatusError{
-			StatusCode: resp.StatusCode,
-			Body:       responseBody,
-		}
-	}
-
-	return nil
-}
-
-// PostLogisticsObjectCreationNotification sends a notification to the NE-ONE
-// server about the creation of a new logistics object. This allows the NE-ONE
-// server to forward the notification to configured third-party systems.
-func (s *Client) PostLogisticsObjectCreationNotification(
-	ctx context.Context,
-	baseURL string,
-	auth string,
-	logisticsObjectURL string,
-) error {
-	const notificationsEndpoint = "/notifications"
-
-	url, err := urlpkg.JoinPath(baseURL, notificationsEndpoint)
-	if err != nil {
-		return fmt.Errorf("failed to join URL path: %w", err)
-	}
-
-	utcSeconds := time.Now().UTC().Unix()
-
-	const decimalBase = 10
-
-	notificationID := logisticsObjectURL + "_created_" + strconv.FormatInt(utcSeconds, decimalBase)
-
-	notification := onerecord.PieceCreatedNotification(logisticsObjectURL, notificationID)
-
-	requestBody, err := json.Marshal(notification)
-	if err != nil {
-		return fmt.Errorf("failed to marshal notification: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(requestBody))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header = map[string][]string{
-		"Authorization": {auth},
-		"Content-Type":  {"application/ld+json"},
-	}
-
-	resp, err := failsafehttp.NewRequest(req, s.client, s.policies...).Do()
-	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
-	}
-
-	defer func() {
-		err := resp.Body.Close()
-		if err != nil {
-			log.Err(err).Msg("failed to close response body")
-		}
-	}()
-
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	if resp.StatusCode >= http.StatusBadRequest {
-		log.Debug().Str("request_body", string(requestBody)).Msg("request body that caused error response")
-
 		return &StatusError{
 			StatusCode: resp.StatusCode,
 			Body:       responseBody,

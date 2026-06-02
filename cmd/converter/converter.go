@@ -146,15 +146,6 @@ func (forwarder *NeoneDataForwarder) postECommerceBoxes(
 
 		boxURLs = append(boxURLs, logisticsObjectURL)
 		log.Debug().Str("id", string(id)).Str("URL", logisticsObjectURL).Msg("Posted box to NE:ONE Server")
-
-		err = forwarder.Server.PostLogisticsObjectCreationNotification(ctx, neoneServerURL, auth, logisticsObjectURL)
-		if err != nil {
-			log.Err(err).Msg("Failed to post notification for created box")
-
-			continue // box was created successfully, so continue despite failure to notify.
-		}
-
-		log.Debug().Str("id", string(id)).Str("URL", logisticsObjectURL).Msg("Posted notification for created box")
 	}
 
 	accessDelegationULR, err := forwarder.Server.DelegateAccess(ctx,
