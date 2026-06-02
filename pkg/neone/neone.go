@@ -372,7 +372,7 @@ func (s *Client) waitForObjectAvailability(cxt context.Context, baseURL, auth, l
 	log.Debug().Str("URL", logisticsObjectURL).
 		Msg("verifying object availability in the NE-ONE Server")
 
-	resp, err := s.client.Do(req)
+	resp, err := failsafehttp.NewRequest(req, s.client, s.policies...).Do()
 	if err != nil {
 		log.Err(err).Msg("failed to verify object availability")
 
