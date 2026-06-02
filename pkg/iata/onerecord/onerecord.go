@@ -528,20 +528,20 @@ type NotificationEventType struct {
 
 // APIAnyURI represents a URI value in the API namespace.
 type APIAnyURI struct {
-	Type  string `json:"@type"`
-	Value string `json:"@value"`
+	Type  string `json:"@type,omitempty"`
+	Value string `json:"@value,omitempty"`
 }
 
 // Notification represents a notification of an API event, such as the creation
 // or update of a logistics object.
 type Notification struct {
-	APIHasEventType           *NotificationEventType `json:"api:hasEventType"`
-	APIHasLogisticsObject     LogisticsObject        `json:"api:hasLogisticsObject"`
-	APIHasLogisticsObjectType *APIAnyURI             `json:"api:hasLogisticsObjectType"`
+	APIHasEventType           *NotificationEventType `json:"api:hasEventType,omitempty"`
+	APIHasLogisticsObject     LogisticsObject        `json:"api:hasLogisticsObject,omitempty"`
+	APIHasLogisticsObjectType *APIAnyURI             `json:"api:hasLogisticsObjectType,omitempty"`
 
-	Context *Context `json:"@context"`
-	Type    string   `json:"@type"`
-	ID      string   `json:"@id"`
+	Context *Context `json:"@context,omitempty"`
+	Type    string   `json:"@type,omitempty"`
+	ID      string   `json:"@id,omitempty"`
 }
 
 // APILogisticsObjectCreatedNotificationEventType returns a NotificationEventType
@@ -578,13 +578,13 @@ func PieceCreatedNotification(pieceID, notificationID string) Notification {
 // objects, including the permissions and logistics objects involved in the
 // delegation.
 type AccessDelegationRequest struct {
-	Context                      Context                 `json:"@context"`
-	Type                         string                  `json:"@type"`
-	APIHasDescription            string                  `json:"api:hasDescription"`
-	APIHasPermission             []APIPermission         `json:"api:hasPermission"`
-	APIIsRequestedFor            []DataHolderURL         `json:"api:isRequestedFor"`
-	APINotifyRequestStatusChange bool                    `json:"api:notifyRequestStatusChange"`
-	APIHasLogisticsObject        []IDOnlyLogisticsObject `json:"api:hasLogisticsObject"`
+	Context                      *Context                `json:"@context,omitempty"`
+	Type                         string                  `json:"@type,omitempty"`
+	APIHasDescription            string                  `json:"api:hasDescription,omitempty"`
+	APIHasPermission             []APIPermission         `json:"api:hasPermission,omitempty"`
+	APIIsRequestedFor            []DataHolderURL         `json:"api:isRequestedFor,omitempty"`
+	APINotifyRequestStatusChange bool                    `json:"api:notifyRequestStatusChange,omitempty"`
+	APIHasLogisticsObject        []IDOnlyLogisticsObject `json:"api:hasLogisticsObject,omitempty"`
 }
 
 // CargoAPIContext returns a Context with both the Cargo and API namespaces for
@@ -599,7 +599,7 @@ func CargoAPIContext() Context {
 // APIPermission represents a permission in an access delegation request,
 // including the ID of the permission.
 type APIPermission struct {
-	ID string `json:"@id"`
+	ID string `json:"@id,omitempty"`
 }
 
 // APIPermissionGetLogisticsObject returns an APIPermission for the
@@ -621,14 +621,14 @@ func APIPermissionPatchLogisticsObject() APIPermission {
 // DataHolderURL represents a request for delegated access for a specific NE:ONE
 // Server, identified by its DATA_HOLDER URL.
 type DataHolderURL struct {
-	ID string `json:"@id"`
+	ID string `json:"@id,omitempty"`
 }
 
 // IDOnlyLogisticsObject represents a reference to a logistics object by its ID,
 // used in access delegation requests when the full logistics object is not
 // needed.
 type IDOnlyLogisticsObject struct {
-	ID string `json:"@id"`
+	ID string `json:"@id,omitempty"`
 }
 
 func (IDOnlyLogisticsObject) IsLogisticsObject() {}
@@ -650,7 +650,7 @@ func CargoAPIAccessDelegationRequest(
 	}
 
 	return AccessDelegationRequest{
-		Context:                      CargoAPIContext(),
+		Context:                      new(CargoAPIContext()),
 		Type:                         "api:AccessDelegation",
 		APIHasDescription:            description,
 		APIHasPermission:             permissions,
