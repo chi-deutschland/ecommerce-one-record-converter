@@ -145,7 +145,7 @@ func (forwarder *NeoneDataForwarder) postECommerceBoxes(
 		}
 
 		boxURLs = append(boxURLs, logisticsObjectURL)
-		log.Debug().Str("URL", logisticsObjectURL).Msg("Box posted to NE:ONE Server")
+		log.Debug().Str("id", string(id)).Str("URL", logisticsObjectURL).Msg("Posted box to NE:ONE Server")
 
 		err = forwarder.Server.PostLogisticsObjectCreationNotification(ctx, neoneServerURL, auth, logisticsObjectURL)
 		if err != nil {
@@ -154,7 +154,7 @@ func (forwarder *NeoneDataForwarder) postECommerceBoxes(
 			continue // box was created successfully, so continue despite failure to notify.
 		}
 
-		log.Debug().Str("URL", logisticsObjectURL).Msg("Posted notification for created box")
+		log.Debug().Str("id", string(id)).Str("URL", logisticsObjectURL).Msg("Posted notification for created box")
 	}
 
 	accessDelegationULR, err := forwarder.Server.DelegateAccess(ctx,
@@ -199,7 +199,7 @@ func (forwarder *NeoneDataForwarder) postECommerceParcels(
 		}
 
 		parcelURLs = append(parcelURLs, logisticsObjectURL)
-		log.Debug().Str("URL", logisticsObjectURL).Msg("Parcel posted to NE:ONE Server")
+		log.Debug().Str("id", string(id)).Str("URL", logisticsObjectURL).Msg("Posted parcel to NE:ONE Server")
 	}
 
 	accessDelegationULR, err := forwarder.Server.DelegateAccess(ctx,
@@ -258,7 +258,7 @@ func (forwarder *NeoneDataForwarder) postECommercePieces(
 		}
 
 		pieceURLs = append(pieceURLs, logisticsObjectURL)
-		log.Debug().Str("URL", logisticsObjectURL).Msg("Piece posted to NE:ONE Server")
+		log.Debug().Str("id", string(id)).Str("URL", logisticsObjectURL).Msg("Posted piece to NE:ONE Server")
 	}
 
 	accessDelegationULR, err := forwarder.Server.DelegateAccess(ctx,
@@ -285,6 +285,7 @@ func (forwarder *NeoneDataForwarder) postECommerceItems(
 	items []Item,
 ) ([]string, error) {
 	var productURLs []string
+
 	var itemURLs []string
 
 	for _, item := range items {
@@ -303,7 +304,12 @@ func (forwarder *NeoneDataForwarder) postECommerceItems(
 		}
 
 		productURLs = append(productURLs, productURL)
-		log.Debug().Str("URL", productURL).Msg("Product posted to NE:ONE Server")
+
+		log.Debug().
+			Str("SKU", item.Product.SkuNumber).
+			Str("HSCODE", item.Product.HsCode).
+			Str("URL", productURL).
+			Msg("Posted product to NE:ONE Server")
 
 		logisticObjectItem := onerecord.CargoItem(onerecord.ItemParams{
 			Product:               onerecord.NewProductReference(productURL),
@@ -327,7 +333,10 @@ func (forwarder *NeoneDataForwarder) postECommerceItems(
 		}
 
 		itemURLs = append(itemURLs, logisticsObjectURL)
-		log.Debug().Str("URL", logisticsObjectURL).Msg("Item posted to NE:ONE Server")
+		log.Debug().
+			Str("unit_price", item.UnitPrice).
+			Str("URL", logisticsObjectURL).
+			Msg("Posted item to NE:ONE Server")
 	}
 
 	itemProductURLs := append(itemURLs, productURLs...)
