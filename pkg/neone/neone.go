@@ -21,6 +21,7 @@ import (
 	"chi-deutschland.com/ecommerce-one-record-converter/pkg/iata/onerecord"
 	"github.com/failsafe-go/failsafe-go"
 	"github.com/failsafe-go/failsafe-go/failsafehttp"
+	"github.com/failsafe-go/failsafe-go/timeout"
 	"github.com/rs/zerolog/log"
 )
 
@@ -151,9 +152,15 @@ func (s *Client) ValidateToken(ctx context.Context, baseURL, auth string) error 
 	urlQuery.Add("limit", "1")
 	req.URL.RawQuery = urlQuery.Encode()
 
-	// not using policies to avoid longer retries while the frontend is waiting for
-	// token validation.
-	resp, err := failsafehttp.NewRequest(req, s.client).Do()
+	const tokenValidationTimeout = 8 * time.Second
+
+	tokenValidationPolicies := []failsafe.Policy[*http.Response]{
+		timeout.NewBuilder[*http.Response](tokenValidationTimeout).Build(),
+	}
+
+	// using a specific policy as the frontend is synchronously waiting for token
+	// validation.
+	resp, err := failsafehttp.NewRequest(req, s.client, tokenValidationPolicies...).Do()
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
 	}
