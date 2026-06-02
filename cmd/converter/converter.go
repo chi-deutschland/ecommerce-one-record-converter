@@ -339,21 +339,33 @@ func (forwarder *NeoneDataForwarder) postECommerceItems(
 			Msg("Posted item to NE:ONE Server")
 	}
 
-	itemProductURLs := append(itemURLs, productURLs...)
-
-	accessDelegationULR, err := forwarder.Server.DelegateAccess(ctx,
+	itemAccessDelegationULR, err := forwarder.Server.DelegateAccess(ctx,
 		neoneServerURL,
 		auth,
-		"Automatic access delegation for eCommerce items and products",
-		itemProductURLs)
+		"Automatic access delegation for eCommerce items",
+		itemURLs)
 	if err != nil {
-		return nil, fmt.Errorf("failed to delegate access for items and products: %w", err)
+		return nil, fmt.Errorf("failed to delegate access for items: %w", err)
 	}
 
 	log.Debug().
-		Str("access_delegation_URL", accessDelegationULR).
-		Strs("URLs", itemProductURLs).
-		Msg("Posted access delegation for items and products to NE:ONE Server")
+		Str("access_delegation_URL", itemAccessDelegationULR).
+		Strs("URLs", itemURLs).
+		Msg("Posted access delegation for items to NE:ONE Server")
+
+	productAccessDelegationULR, err := forwarder.Server.DelegateAccess(ctx,
+		neoneServerURL,
+		auth,
+		"Automatic access delegation for eCommerce products",
+		productURLs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delegate access for products: %w", err)
+	}
+
+	log.Debug().
+		Str("access_delegation_URL", productAccessDelegationULR).
+		Strs("URLs", productURLs).
+		Msg("Posted access delegation for products to NE:ONE Server")
 
 	return itemURLs, nil
 }
