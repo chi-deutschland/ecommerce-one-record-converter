@@ -124,7 +124,7 @@ The server starts at `http://localhost:8181` (or the address configured in `conf
 ## Excel File Format
 
 An example file with anonymized data is provided at
-[`cmd/converter/testdata/fake_ecommerce_data.xlsx`](cmd/converter/testdata/fake_ecommerce_data.xlsx).
+[`cmd/converter/testdata/anonymized_ecommerce_data.xlsx`](cmd/converter/testdata/anonymized_ecommerce_data.xlsx).
 
 The spreadsheet must contain one item per row with the following columns (in order):
 

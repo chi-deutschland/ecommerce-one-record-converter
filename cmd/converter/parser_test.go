@@ -9,11 +9,11 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-//go:embed testdata/fake_ecommerce_data.xlsx
-var fakeEcommerceData []byte
+//go:embed testdata/anonymized_ecommerce_data.xlsx
+var anonymizedECommerceData []byte
 
 func TestParseExcelData_EmbeddedFile(t *testing.T) {
-	file, err := excelize.OpenReader(bytes.NewReader(fakeEcommerceData))
+	file, err := excelize.OpenReader(bytes.NewReader(anonymizedECommerceData))
 	if err != nil {
 		t.Fatalf("failed to open embedded excel file: %v", err)
 	}
