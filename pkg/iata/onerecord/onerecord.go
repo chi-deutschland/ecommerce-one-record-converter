@@ -378,13 +378,11 @@ func NewPieceReferenceArray(ids []string) []Piece {
 }
 
 // CargoPiece creates a new Piece with the CargoContext.
-func CargoPiece(referenceID string, containedItemIDs []string, involvedParties []Party) Piece {
+func CargoPiece(referenceID string, containedItems []Item, involvedParties []Party) Piece {
 	var otherIdentifiers []OtherIdentifier
 	if referenceID != "" {
 		otherIdentifiers = []OtherIdentifier{ReferenceIDIdentifier(referenceID)}
 	}
-
-	containedItems := NewItemArrayFromIDs(containedItemIDs)
 
 	return Piece{
 		Context:          new(CargoContext()),
@@ -403,7 +401,7 @@ func ReferenceIDIdentifier(referenceID string) OtherIdentifier {
 
 // CargoParcelPiece creates a new Piece representing a parcel, with the
 // CargoContext.
-func CargoParcelPiece(containedPieces []Piece, parcelID string) Piece {
+func CargoParcelPiece(parcelID string, containedPieces []Piece) Piece {
 	var otherIdentifiers []OtherIdentifier
 	if parcelID != "" {
 		otherIdentifiers = []OtherIdentifier{ParcelIDIdentifier(parcelID)}

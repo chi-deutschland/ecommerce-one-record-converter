@@ -2,6 +2,7 @@ http:
   addr: ":8181"
   staticFilesDir: "cmd/frontend/dist"
 neone:
+  validateObjectCreation: false
   requestTimeout: 3m
   rateLimiterPolicy:
     maxExecutionsPerMinute: 100

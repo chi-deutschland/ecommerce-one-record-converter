@@ -103,7 +103,14 @@ func setUpNeOneServerConn(cfg config.NEONE) *neone.Client {
 			"proceeding without access delegation for created eCommerce Objects")
 	}
 
-	return neone.NewServer(http.DefaultClient, accessDelegationURLs, timeoutPolicy, rateLimitPolicy, retryPolicy)
+	return neone.NewServer(
+		http.DefaultClient,
+		accessDelegationURLs,
+		cfg.ValidateObjectCreation,
+		timeoutPolicy,
+		rateLimitPolicy,
+		retryPolicy,
+	)
 }
 
 func setUpMux(cfg config.HTTP, server *neone.Client) *http.ServeMux {

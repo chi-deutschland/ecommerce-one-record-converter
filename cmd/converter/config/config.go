@@ -22,10 +22,11 @@ type HTTP struct {
 
 // NEONE defines the configuration for connecting to the NE-ONE Server.
 type NEONE struct {
-	RequestTimeout    time.Duration     `yaml:"requestTimeout"`
-	RateLimiterPolicy RateLimiterPolicy `yaml:"rateLimiterPolicy"`
-	RetryPolicy       RetryPolicy       `yaml:"retryPolicy"`
-	AccessDelegation  AccessDelegation  `yaml:"accessDelegation"`
+	ValidateObjectCreation bool              `yaml:"validateObjectCreation"`
+	RequestTimeout         time.Duration     `yaml:"requestTimeout"`
+	RateLimiterPolicy      RateLimiterPolicy `yaml:"rateLimiterPolicy"`
+	RetryPolicy            RetryPolicy       `yaml:"retryPolicy"`
+	AccessDelegation       AccessDelegation  `yaml:"accessDelegation"`
 }
 
 // RateLimiterPolicy defines the configuration for rate limiting requests to the
@@ -91,7 +92,8 @@ func Default() Config {
 			StaticFilesDir: "cmd/frontend/dist",
 		},
 		NEONE: NEONE{
-			RequestTimeout: requestTimeout,
+			ValidateObjectCreation: false,
+			RequestTimeout:         requestTimeout,
 			RateLimiterPolicy: RateLimiterPolicy{
 				MaxExecutionsPerMinute: rateLimitMaxExecutionsPerMinute,
 				MaxWaitTime:            rateLimitMaxWaitTime,

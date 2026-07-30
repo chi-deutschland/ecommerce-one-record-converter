@@ -37,9 +37,10 @@ func (e *StatusError) Error() string {
 
 // Client is a NE-ONE API client for interacting with the NE-ONE server.
 type Client struct {
-	client               *http.Client
-	accessDelegationURLs []string
-	policies             []failsafe.Policy[*http.Response]
+	client                 *http.Client
+	accessDelegationURLs   []string
+	validateObjectCreation bool
+	policies               []failsafe.Policy[*http.Response]
 }
 
 // NewServer creates a new NE-ONE API client with the given HTTP client and
@@ -47,12 +48,14 @@ type Client struct {
 func NewServer(
 	client *http.Client,
 	accessDelegationURLs []string,
+	validateObjectCreation bool,
 	policies ...failsafe.Policy[*http.Response],
 ) *Client {
 	return &Client{
-		client:               client,
-		accessDelegationURLs: accessDelegationURLs,
-		policies:             policies,
+		client:                 client,
+		accessDelegationURLs:   accessDelegationURLs,
+		validateObjectCreation: validateObjectCreation,
+		policies:               policies,
 	}
 }
 
@@ -67,7 +70,7 @@ func (s *Client) PostLogisticsObject(
 ) (string, error) {
 	requestBody, err := json.Marshal(logisticsObject)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal waybill: %w", err)
+		return "", fmt.Errorf("failed to marshal logistic object: %w", err)
 	}
 
 	const logisticsObjectEndpoint = "logistics-objects/"
@@ -119,9 +122,11 @@ func (s *Client) PostLogisticsObject(
 
 	log.Debug().
 		Str("location_header", logisticsObjectURL).
-		Msg("received logistics object response from NE-ONE server")
+		Msg("Received logistics object response from NE-ONE server")
 
-	s.waitForObjectAvailability(ctx, baseURL, auth, logisticsObjectURL)
+	if s.validateObjectCreation {
+		s.waitForObjectAvailability(ctx, baseURL, auth, logisticsObjectURL)
+	}
 
 	return logisticsObjectURL, nil
 }
@@ -269,9 +274,11 @@ func (s *Client) DelegateAccess(
 
 	log.Debug().
 		Str("location_header", actionRequestURL).
-		Msg("received action request response from NE-ONE server")
+		Msg("Received action request response from NE-ONE server")
 
-	s.waitForObjectAvailability(ctx, baseURL, auth, actionRequestURL)
+	if s.validateObjectCreation {
+		s.waitForObjectAvailability(ctx, baseURL, auth, actionRequestURL)
+	}
 
 	return actionRequestURL, nil
 }
@@ -332,4 +339,102 @@ func (s *Client) waitForObjectAvailability(cxt context.Context, baseURL, auth, l
 	}
 
 	log.Debug().Msg("object availability verified successfully.")
+}
+
+// GetLogisticsObjectEmbeddedIDs returns a list including the ID of the given Logistic Object
+// and the IDs of all embedded objects.
+func (s *Client) GetLogisticsObjectEmbeddedIDs(
+	cxt context.Context,
+	baseURL string,
+	auth string,
+	logisticsObjectURL string,
+) ([]string, error) {
+	if !strings.HasPrefix(logisticsObjectURL, baseURL) {
+		return nil, fmt.Errorf("unexpected base URL in logistics object URL: %s", logisticsObjectURL)
+	}
+
+	targetURL, err := urlpkg.Parse(logisticsObjectURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse logistics object URL: %w", err)
+	}
+
+	params := urlpkg.Values{}
+	params.Set("embedded", "true")
+	targetURL.RawQuery = params.Encode()
+
+	req, err := http.NewRequestWithContext(cxt, http.MethodGet, targetURL.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request for embedded IDs: %w", err)
+	}
+
+	req.Header = map[string][]string{
+		"Accept":        {"application/ld+json"},
+		"Authorization": {auth},
+	}
+
+	resp, err := failsafehttp.NewRequest(req, s.client, s.policies...).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request for embedded IDs: %w", err)
+	}
+
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.Err(err).Msg("failed to close response body")
+		}
+	}()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body for embedded IDs: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, &StatusError{
+			StatusCode: resp.StatusCode,
+			Body:       body,
+		}
+	}
+
+	ids, err := parseEmbeddedIDs(baseURL, body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse embedded IDs: %w", err)
+	}
+
+	return ids, nil
+}
+
+type graphResponse struct {
+	Graph []idObject `json:"@graph"`
+}
+
+type idObject struct {
+	ID string `json:"@id"`
+}
+
+func parseEmbeddedIDs(baseURL string, body []byte) ([]string, error) {
+	var graphResp graphResponse
+
+	err := json.Unmarshal(body, &graphResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response body: %w", err)
+	}
+
+	ids := make([]string, 0, len(graphResp.Graph))
+	for _, obj := range graphResp.Graph {
+		if strings.HasPrefix(obj.ID, baseURL) {
+			ids = append(ids, obj.ID)
+
+			continue
+		}
+
+		if !strings.HasPrefix(obj.ID, "neone:") {
+			log.Warn().
+				Str("id", obj.ID).
+				Str("baseURL", baseURL).
+				Msg("skipping ID with unexpected base URL")
+		}
+	}
+
+	return ids, nil
 }
